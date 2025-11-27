@@ -2,6 +2,7 @@
 
 #include <print>
 #include <iostream>
+#include <fstream>
 
 /*
 encoder_class: KmerSequenceEncoder
@@ -22,10 +23,13 @@ training_hyperparameters:
   weight_decay: 1.0e-06
 */
 
-int main() {
-  torch::Tensor tensor = torch::rand({2, 3});
-  std::cout << tensor << std::endl;
+std::vector<char> read_file(const std::string& path) {
+  std::ifstream file(path, std::ios::binary);
+  return std::vector<char>(std::istreambuf_iterator<char>(file),
+                           std::istreambuf_iterator<char>());
+}
 
+int main() {
   // Initialize encoder
   int kmer_length = 3;
   int site_count = 500;
@@ -41,8 +45,53 @@ int main() {
   IndepRSCNNModel model(kmer_count, kmer_length, embedding_dim, filter_count,
                         kernel_size, dropout_prob);
 
-  // Load pre-trained weights
-  torch::load(model, "ThriftyHumV0.2-45.pth");
+  std::println("------");
+  std::cout << model << std::endl;  // Shows registered modules
+  std::println("------");
+
+  try {
+    auto data = read_file("ThriftyHumV0.2-45-libtorch.pth");
+    auto loaded = torch::pickle_load(data);
+    auto state_dict = loaded.toGenericDict();
+
+    // Print available keys
+    std::cout << "State dict keys:\n";
+    for (const auto& item : state_dict) {
+      std::string key = item.key().toStringRef();
+      torch::Tensor tensor = item.value().toTensor();
+      std::cout << "  " << key << ": " << tensor.sizes() << std::endl;
+    }
+
+    // Load parameters manually
+    torch::NoGradGuard no_grad;
+
+    for (auto& param : model->named_parameters()) {
+      std::string name = param.key();
+
+      if (state_dict.contains(name)) {
+        torch::Tensor loaded_tensor = state_dict.at(name).toTensor();
+        param.value().copy_(loaded_tensor);
+        std::cout << "Loaded: " << name << std::endl;
+      } else {
+        std::cerr << "Warning: " << name << " not found in state_dict"
+                  << std::endl;
+      }
+    }
+
+    // Also load buffers (e.g., batch norm running mean/var)
+    for (auto& buffer : model->named_buffers()) {
+      std::string name = buffer.key();
+
+      if (state_dict.contains(name)) {
+        torch::Tensor loaded_tensor = state_dict.at(name).toTensor();
+        buffer.value().copy_(loaded_tensor);
+        std::cout << "Loaded buffer: " << name << std::endl;
+      }
+    }
+  } catch (const std::exception& e) {
+    std::cerr << "Error: " << e.what() << std::endl;
+    return -1;
+  }
 
   // Set to evaluation mode
   model->eval();
