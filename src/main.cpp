@@ -1,4 +1,4 @@
-#include <thrifty/model.hpp>
+#include <netam/model.hpp>
 
 #include <print>
 #include <iostream>
@@ -33,7 +33,7 @@ int main() {
   // Initialize encoder
   int kmer_length = 3;
   int site_count = 500;
-  KmerSequenceEncoder encoder(kmer_length, site_count);
+  netam::KmerSequenceEncoder encoder(kmer_length, site_count);
 
   // Initialize model
   int kmer_count = encoder.getKmerCount();
@@ -42,8 +42,8 @@ int main() {
   int kernel_size = 9;
   double dropout_prob = 0.2;
 
-  IndepRSCNNModel model(kmer_count, kmer_length, embedding_dim, filter_count,
-                        kernel_size, dropout_prob);
+  netam::IndepRSCNNModel model(kmer_count, kmer_length, embedding_dim,
+                               filter_count, kernel_size, dropout_prob);
 
   std::println("------");
   std::cout << model << std::endl;  // Shows registered modules
@@ -65,7 +65,7 @@ int main() {
     // Load parameters manually
     torch::NoGradGuard no_grad;
 
-    for (auto& param : model->named_parameters()) {
+    for (auto& param : model.named_parameters()) {
       std::string name = param.key();
 
       if (state_dict.contains(name)) {
@@ -79,7 +79,7 @@ int main() {
     }
 
     // Also load buffers (e.g., batch norm running mean/var)
-    for (auto& buffer : model->named_buffers()) {
+    for (auto& buffer : model.named_buffers()) {
       std::string name = buffer.key();
 
       if (state_dict.contains(name)) {
@@ -94,7 +94,7 @@ int main() {
   }
 
   // Set to evaluation mode
-  model->eval();
+  model.eval();
 
   // Process a sequence
   std::string sequence_parent_heavy =
@@ -115,7 +115,7 @@ int main() {
 
   // Forward pass
   torch::NoGradGuard no_grad;
-  auto [rates, csp_logits] = model->forward(encoded, mask, wt_modifier);
+  auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
   std::cout << "Rates shape: " << rates.sizes() << std::endl;
   std::cout << "CSP logits shape: " << csp_logits.sizes() << std::endl;

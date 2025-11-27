@@ -1,11 +1,11 @@
 #pragma once
 #include <torch/torch.h>
 
-class IndepRSCNNModelImpl : public torch::nn::Module {
+namespace netam {
+class IndepRSCNNModel : public torch::nn::Module {
  public:
-  IndepRSCNNModelImpl(int kmer_count, int kmer_length, int embedding_dim,
-                      int filter_count, int kernel_size,
-                      double dropout_prob = 0.1)
+  IndepRSCNNModel(int kmer_count, int kmer_length, int embedding_dim,
+                  int filter_count, int kernel_size, double dropout_prob = 0.1)
       : kmer_count_(kmer_count),
         kmer_length_(kmer_length),
         kernel_size_(kernel_size),
@@ -93,4 +93,4 @@ class IndepRSCNNModelImpl : public torch::nn::Module {
   torch::nn::Linear s_linear_;
 };
 
-TORCH_MODULE(IndepRSCNNModel);
+}  // namespace netam

@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <functional>
 
+namespace netam {
 class KmerSequenceEncoder {
  public:
   KmerSequenceEncoder(int kmer_length, int site_count)
@@ -122,3 +123,4 @@ class KmerSequenceEncoder {
     return result;
   }
 };
+}  // namespace netam
