@@ -3,6 +3,8 @@
 #include <netam/common.hpp>
 
 #include <torch/torch.h>
+#include <yaml-cpp/yaml.h>
+
 #include <vector>
 #include <string>
 #include <unordered_map>
@@ -12,8 +14,9 @@
 namespace netam {
 class KmerSequenceEncoder {
  public:
-  KmerSequenceEncoder(std::size_t kmer_length, std::size_t site_count)
-      : kmer_length_(kmer_length), site_count_(site_count) {
+  KmerSequenceEncoder(const YAML::Node& yaml)
+      : kmer_length_{yaml["kmer_length"].as<std::size_t>()},
+        site_count_{yaml["site_count"].as<std::size_t>()} {
     Assert(kmer_length_ % 2 == 1);
     overhang_length_ = (kmer_length_ - 1) / 2;
 
@@ -56,16 +59,15 @@ class KmerSequenceEncoder {
     return {encoded, wt_base_modifier};
   }
 
-  // Getter methods
-  std::size_t getKmerCount() const { return all_kmers_.size(); }
+  std::size_t getKmerCount() const noexcept { return all_kmers_.size(); }
 
-  std::size_t getKmerLength() const { return kmer_length_; }
+  std::size_t getKmerLength() const noexcept { return kmer_length_; }
 
-  std::size_t getSiteCount() const { return site_count_; }
+  std::size_t getSiteCount() const noexcept { return site_count_; }
 
  private:
-  std::size_t kmer_length_;
-  std::size_t site_count_;
+  const std::size_t kmer_length_;
+  const std::size_t site_count_;
   std::size_t overhang_length_;
   std::vector<std::string> all_kmers_;
   std::unordered_map<std::string, std::size_t> kmer_to_index_;
