@@ -1,4 +1,7 @@
 #pragma once
+
+#include <netam/common.hpp>
+
 #include <torch/torch.h>
 #include <vector>
 #include <string>
@@ -9,16 +12,16 @@
 namespace netam {
 class KmerSequenceEncoder {
  public:
-  KmerSequenceEncoder(int kmer_length, int site_count)
+  KmerSequenceEncoder(std::size_t kmer_length, std::size_t site_count)
       : kmer_length_(kmer_length), site_count_(site_count) {
-    assert(kmer_length_ % 2 == 1);
+    Assert(kmer_length_ % 2 == 1);
     overhang_length_ = (kmer_length_ - 1) / 2;
 
     // Generate all kmers
     all_kmers_ = generateKmers(kmer_length_);
 
     // Build kmer to index map
-    for (size_t i = 0; i < all_kmers_.size(); ++i) {
+    for (std::size_t i = 0; i < all_kmers_.size(); ++i) {
       kmer_to_index_[all_kmers_[i]] = i;
     }
   }
@@ -33,12 +36,15 @@ class KmerSequenceEncoder {
                                   std::string(overhang_length_, 'N');
 
     // Encode kmers
-    std::vector<int32_t> kmer_indices;
-    for (int i = 0; i < site_count_; ++i) {
+    std::vector<std::int32_t> kmer_indices;
+    for (std::size_t i = 0; i < site_count_; ++i) {
       if (i + kmer_length_ <= padded_sequence.length()) {
         std::string kmer = padded_sequence.substr(i, kmer_length_);
         auto it = kmer_to_index_.find(kmer);
-        kmer_indices.push_back(it != kmer_to_index_.end() ? it->second : 0);
+        kmer_indices.push_back(
+            it != kmer_to_index_.end()
+                ? signed_cast(narrowing_cast<std::uint32_t>(it->second))
+                : 0);
       } else {
         kmer_indices.push_back(0);
       }
@@ -51,58 +57,55 @@ class KmerSequenceEncoder {
   }
 
   // Getter methods
-  int getKmerCount() const { return all_kmers_.size(); }
+  std::size_t getKmerCount() const { return all_kmers_.size(); }
 
-  int getKmerLength() const { return kmer_length_; }
+  std::size_t getKmerLength() const { return kmer_length_; }
 
-  int getSiteCount() const { return site_count_; }
+  std::size_t getSiteCount() const { return site_count_; }
 
  private:
-  int kmer_length_;
-  int site_count_;
-  int overhang_length_;
+  std::size_t kmer_length_;
+  std::size_t site_count_;
+  std::size_t overhang_length_;
   std::vector<std::string> all_kmers_;
-  std::unordered_map<std::string, int> kmer_to_index_;
+  std::unordered_map<std::string, std::size_t> kmer_to_index_;
 
   static constexpr const char* BASES = "ACGT";
   static constexpr float BIG = 30.0f;
 
-  std::vector<std::string> generateKmers(int length) {
+  std::vector<std::string> generateKmers(std::size_t length) {
     std::vector<std::string> kmers;
     kmers.push_back("N");  // Placeholder for kmers with N
 
     // Generate all possible kmers of given length
-    std::function<void(std::string, int)> generate = [&](std::string current,
-                                                         int pos) {
-      if (pos == length) {
-        kmers.push_back(current);
-        return;
-      }
-      for (int i = 0; i < 4; ++i) {
-        generate(current + BASES[i], pos + 1);
-      }
-    };
+    std::function<void(std::string, std::size_t)> generate =
+        [&](std::string current, std::size_t pos) {
+          if (pos == length) {
+            kmers.push_back(current);
+            return;
+          }
+          for (std::size_t i = 0; i < 4; ++i) {
+            generate(current + BASES[i], pos + 1);
+          }
+        };
 
     generate("", 0);
     return kmers;
   }
 
   torch::Tensor computeWtBaseModifier(const std::string& parent) {
-    torch::Tensor wt_base_modifier = torch::zeros({site_count_, 4});
+    torch::Tensor wt_base_modifier =
+        torch::zeros({signed_cast(site_count_), 4});
 
-    for (int i = 0;
-         i < std::min(static_cast<int>(parent.length()), site_count_); ++i) {
+    for (std::size_t i = 0; i < std::min(parent.length(), site_count_); ++i) {
       char base = parent[i];
-      int base_idx = getBaseIndex(base);
-      if (base_idx >= 0) {
-        wt_base_modifier[i][base_idx] = -BIG;
-      }
+      wt_base_modifier[signed_cast(i)][signed_cast(getBaseIndex(base))] = -BIG;
     }
 
     return wt_base_modifier;
   }
 
-  int getBaseIndex(char base) {
+  std::size_t getBaseIndex(char base) {
     switch (base) {
       case 'A':
         return 0;
@@ -113,7 +116,7 @@ class KmerSequenceEncoder {
       case 'T':
         return 3;
       default:
-        return -1;
+        fail("Unknown base");
     }
   }
 

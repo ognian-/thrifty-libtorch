@@ -30,6 +30,8 @@ std::vector<char> read_file(const std::string& path) {
 }
 
 int main() {
+  netam::model m{"ThriftyHumV0.2-45-libtorch.pth", "ThriftyHumV0.2-45.yml"};
+
   // Initialize encoder
   int kmer_length = 3;
   int site_count = 500;
