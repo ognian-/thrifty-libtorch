@@ -48,34 +48,34 @@ class IndepRSCNNModel : public torch::nn::Module {
         padding_{(params.kernel_size() - 1) / 2},
 
         // R component layers
-        r_kmer_embedding_(register_module(
+        r_kmer_embedding_{register_module(
             "r_kmer_embedding",
-            torch::nn::Embedding(params.kmer_count(), params.embedding_dim()))),
-        r_conv_(register_module(
-            "r_conv", torch::nn::Conv1d(torch::nn::Conv1dOptions(
-                                            signed_cast(params.embedding_dim()),
-                                            signed_cast(params.filter_count()),
-                                            signed_cast(params.kernel_size()))
-                                            .padding(padding_)))),
-        r_dropout_(register_module("r_dropout",
-                                   torch::nn::Dropout(params.dropout_prob()))),
-        r_linear_(register_module("r_linear",
-                                  torch::nn::Linear(params.filter_count(), 1))),
+            torch::nn::Embedding{params.kmer_count(), params.embedding_dim()})},
+        r_conv_{register_module("r_conv",
+                                torch::nn::Conv1d{torch::nn::Conv1dOptions{
+                                    signed_cast(params.embedding_dim()),
+                                    signed_cast(params.filter_count()),
+                                    signed_cast(params.kernel_size())}
+                                                      .padding(padding_)})},
+        r_dropout_{register_module("r_dropout",
+                                   torch::nn::Dropout{params.dropout_prob()})},
+        r_linear_{register_module("r_linear",
+                                  torch::nn::Linear{params.filter_count(), 1})},
 
         // S component layers
-        s_kmer_embedding_(register_module(
+        s_kmer_embedding_{register_module(
             "s_kmer_embedding",
-            torch::nn::Embedding(params.kmer_count(), params.embedding_dim()))),
-        s_conv_(register_module(
-            "s_conv", torch::nn::Conv1d(torch::nn::Conv1dOptions(
+            torch::nn::Embedding{params.kmer_count(), params.embedding_dim()})},
+        s_conv_{register_module(
+            "s_conv", torch::nn::Conv1d{torch::nn::Conv1dOptions(
                                             signed_cast(params.embedding_dim()),
                                             signed_cast(params.filter_count()),
                                             signed_cast(params.kernel_size()))
-                                            .padding(padding_)))),
-        s_dropout_(register_module("s_dropout",
-                                   torch::nn::Dropout(params.dropout_prob()))),
-        s_linear_(register_module(
-            "s_linear", torch::nn::Linear(params.filter_count(), 4))) {}
+                                            .padding(padding_)})},
+        s_dropout_{register_module("s_dropout",
+                                   torch::nn::Dropout{params.dropout_prob()})},
+        s_linear_{register_module(
+            "s_linear", torch::nn::Linear{params.filter_count(), 4})} {}
 
   std::pair<torch::Tensor, torch::Tensor> forward(
       torch::Tensor encoded_parents, torch::Tensor masks,
@@ -104,8 +104,7 @@ class IndepRSCNNModel : public torch::nn::Module {
     return {rates, csp_logits};
   }
 
-  void adjustRateBiasBy(double log_adjustment_factor) {
-    torch::NoGradGuard no_grad;
+  void adjust_rate_bias_by(double log_adjustment_factor) {
     r_linear_->bias.data() += log_adjustment_factor;
   }
 

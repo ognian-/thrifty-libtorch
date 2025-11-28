@@ -14,7 +14,7 @@ class model {
         const std::filesystem::path& yaml_path)
       : yaml_{YAML::LoadFile(yaml_path)},
         encoder_{yaml_["encoder_parameters"]},
-        model_{{encoder_.getKmerCount(), yaml_["model_hyperparameters"]}} {
+        model_{{encoder_.kmer_count(), yaml_["model_hyperparameters"]}} {
     std::ifstream file(weights_path, std::ios::binary);
     std::vector<char> data{std::istreambuf_iterator<char>{file},
                            std::istreambuf_iterator<char>{}};
