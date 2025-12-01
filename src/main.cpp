@@ -11,14 +11,23 @@ int main() {
   netam::pcp_dataframe pcp_df{
       "../data/wyatt-10x-1p5m_pcp_2023-11-30_NI.first100.csv.gz"};
 
-  // Process a sequence
-  std::string sequence_parent_heavy =
-      "CAGGTGCAGCTGGTGGAGTCTGGGGGAGGCGTGGTCCAGCCTGGGAGGTCCCTGAGACTCTCCTGTGCAGCG"
-      "TCTGGATTCACCTTCAGTAGCTCTGGCATGCACTGGGTCCGCCAGGCTCCAGGCAAGGGGCTGGAGTGGGTG"
-      "GCAGTTATATGGTATGATGGAAGTAATAAATATTATGCAGACTCCGTGAAGGGCCGATTCACCATCTCCAGA"
-      "GACAATTCCAAGAACACGGTGTATCTTCAAATGAACAGCCTAAGAGCCGAGGACACGGCTGTGTATTACTGT"
-      "GCGAGAGAGGGGCACAGTAACTACCCCTACTACTACTACTACATGGACGTCTGGGGCAAAGGGACCACGGTC"
-      "ACCGTCTCCTCA";
+  std::string sequence_parent_heavy;
+
+  std::size_t row_idx = 0;
+  for (auto&& row : pcp_df.read()) {
+    if (row_idx++ == 0) {
+      continue;
+    }
+    std::size_t col_idx = 0;
+    for (auto&& col : row) {
+      if (col_idx++ == 3) {
+        sequence_parent_heavy = col;
+        break;
+      }
+    }
+    break;
+  }
+
   auto [encoded, wt_modifier] =
       model.encoder().encode_sequence(sequence_parent_heavy);
 
@@ -32,9 +41,6 @@ int main() {
 
   // Forward pass
   auto [rates, csp_logits] = model->forward(encoded, mask, wt_modifier);
-
-  std::cout << "Rates shape: " << rates.sizes() << std::endl;
-  std::cout << "CSP logits shape: " << csp_logits.sizes() << std::endl;
 
   fmt::println("Done.");
   return 0;

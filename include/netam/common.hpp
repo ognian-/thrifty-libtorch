@@ -57,4 +57,10 @@ constexpr std::make_signed_t<From> signed_cast(From x) {
   return checked_cast<std::make_signed_t<From>>(x);
 }
 
+template <typename From>
+  requires(std::is_signed_v<From>)
+constexpr std::make_unsigned_t<From> unsigned_cast(From x) {
+  return checked_cast<std::make_unsigned_t<From>>(x);
+}
+
 }  // namespace netam

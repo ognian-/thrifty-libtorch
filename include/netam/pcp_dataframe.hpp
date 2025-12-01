@@ -2,10 +2,13 @@
 
 #include <netam/generator.hpp>
 
+#include <zlib.h>
+
 #include <filesystem>
 #include <ranges>
 #include <string_view>
-#include <fstream>
+#include <array>
+#include <memory>
 
 namespace netam {
 
@@ -25,10 +28,34 @@ class pcp_dataframe {
 
  private:
   static generator<std::string> lines(const std::filesystem::path& path) {
-    std::ifstream is{path};
-    std::string line;
-    while (std::getline(is, line)) {
-      co_yield line;
+    auto close = [](::gzFile x) static {
+      if (x != nullptr) {
+        ::gzclose(x);
+      }
+    };
+    std::unique_ptr<std::remove_pointer_t<gzFile>, decltype(close)> file{
+        ::gzopen(path.c_str(), "rb"), close};
+
+    if (file == nullptr) {
+      fail("Can't open gzip file");
+    }
+
+    std::string buffer;
+    std::array<char, 4096> chunk;
+
+    for (int bytes = ::gzread(file.get(), chunk.data(), chunk.size());
+         bytes > 0; bytes = ::gzread(file.get(), chunk.data(), chunk.size())) {
+      buffer.append(chunk.data(), unsigned_cast(bytes));
+
+      std::size_t pos;
+      while ((pos = buffer.find('\n')) != std::string::npos) {
+        co_yield buffer.substr(0, pos);
+        buffer.erase(0, pos + 1);
+      }
+    }
+
+    if (not buffer.empty()) {
+      co_yield buffer;
     }
   }
 
