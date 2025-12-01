@@ -1,6 +1,6 @@
 #pragma once
 
-#include <print>
+#include <fmt/format.h>
 #include <iostream>
 #include <source_location>
 #include <limits>
@@ -8,7 +8,7 @@
 namespace netam {
 
 [[noreturn]] inline void fail(std::string_view fmt, auto&&... args) {
-  std::println("Failed: {}", std::vformat(fmt, std::make_format_args(args...)));
+  fmt::println("Failed: {}", fmt::vformat(fmt, fmt::make_format_args(args...)));
   std::cout << std::flush;
   throw std::runtime_error{std::vformat(fmt, std::make_format_args(args...))};
 }

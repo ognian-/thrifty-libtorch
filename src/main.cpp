@@ -1,10 +1,15 @@
 #include <netam/model.hpp>
+#include <netam/pcp_dataframe.hpp>
 
 int main() {
-  netam::model model{"ThriftyHumV0.2-45-libtorch.pth", "ThriftyHumV0.2-45.yml"};
+  netam::model model{"../data/ThriftyHumV0.2-45-libtorch.pth",
+                     "../data/ThriftyHumV0.2-45.yml"};
 
   torch::NoGradGuard no_grad;
   model->eval();
+
+  netam::pcp_dataframe pcp_df{
+      "../data/wyatt-10x-1p5m_pcp_2023-11-30_NI.first100.csv.gz"};
 
   // Process a sequence
   std::string sequence_parent_heavy =
@@ -31,6 +36,6 @@ int main() {
   std::cout << "Rates shape: " << rates.sizes() << std::endl;
   std::cout << "CSP logits shape: " << csp_logits.sizes() << std::endl;
 
-  std::println("Done.");
+  fmt::println("Done.");
   return 0;
 }
