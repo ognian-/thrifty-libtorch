@@ -10,7 +10,7 @@ namespace netam {
 [[noreturn]] inline void fail(std::string_view fmt, auto&&... args) {
   fmt::println("Failed: {}", fmt::vformat(fmt, fmt::make_format_args(args...)));
   std::cout << std::flush;
-  throw std::runtime_error{std::vformat(fmt, std::make_format_args(args...))};
+  throw std::runtime_error{fmt::vformat(fmt, fmt::make_format_args(args...))};
 }
 
 inline void Assert(bool condition, std::source_location location =

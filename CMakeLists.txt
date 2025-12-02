@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.30)
+cmake_minimum_required(VERSION 3.28)
 project(netam-libtorch VERSION 0.0.1 LANGUAGES CXX)
 
 option(NETAM_USE_ASAN "Use address sanitizer" OFF)
@@ -73,7 +73,7 @@ find_package(Torch REQUIRED)
 find_package(ZLIB REQUIRED)
 
 set(NETAM_STRICT_WARNINGS -Wall -Wextra -pedantic -Wconversion -Wold-style-cast
-  -Wdouble-promotion -Wnull-dereference -Wnrvo -Wswitch-enum -Wuseless-cast
+  -Wdouble-promotion -Wnull-dereference -Wswitch-enum -Wuseless-cast
   -Wuninitialized -Wstrict-aliasing=3 -Wshadow -Wcast-align=strict -Wcast-qual
   -Wlogical-op -Wlogical-not-parentheses -Wredundant-decls -Wunreachable-code
 )
