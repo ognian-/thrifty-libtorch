@@ -63,6 +63,19 @@ FetchContent_Declare(yaml-cpp
 )
 FetchContent_MakeAvailable(yaml-cpp)
 
+FetchContent_Declare(matplotplusplus
+  GIT_REPOSITORY https://github.com/alandefreitas/matplotplusplus.git
+  GIT_TAG "v1.2.2"
+  GIT_SHALLOW true
+  GIT_PROGRESS true
+  UPDATE_DISCONNECTED true
+  CMAKE_ARGS "-DMATPLOTPP_BUILD_EXAMPLES=no -DMATPLOTPP_BUILD_TESTS=no"
+)
+FetchContent_MakeAvailable(matplotplusplus)
+if(CMAKE_SYSTEM_NAME STREQUAL "FreeBSD")
+  target_compile_definitions(matplot PUBLIC __linux)
+endif()
+
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
@@ -86,6 +99,7 @@ target_link_libraries(netam-libtorch PUBLIC fmt::fmt)
 target_link_libraries(netam-libtorch PUBLIC ${TORCH_LIBRARIES})
 target_link_libraries(netam-libtorch PUBLIC yaml-cpp::yaml-cpp)
 target_link_libraries(netam-libtorch PUBLIC ZLIB::ZLIB)
+target_link_libraries(netam-libtorch PUBLIC Matplot++::matplot)
 target_sources(netam-libtorch PRIVATE
   src/indep_rscnn_model.cpp
   src/kmer_sequence_encoder.cpp
@@ -98,3 +112,7 @@ target_sources(netam-libtorch PRIVATE
 add_executable(main-example)
 target_link_libraries(main-example PRIVATE netam-libtorch)
 target_sources(main-example PRIVATE examples/main.cpp)
+
+add_executable(thrifty-demo)
+target_link_libraries(thrifty-demo PRIVATE netam-libtorch)
+target_sources(thrifty-demo PRIVATE examples/thrifty_demo.cpp)
