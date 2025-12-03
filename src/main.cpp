@@ -1,5 +1,6 @@
 #include <netam/model.hpp>
 #include <netam/pcp_dataframe.hpp>
+#include <netam/likelihood.hpp>
 
 int main() {
   netam::model model{"../data/ThriftyHumV0.2-45-libtorch.pth",
@@ -41,6 +42,13 @@ int main() {
 
   // Forward pass
   auto [rates, csp_logits] = model->forward(encoded, mask, wt_modifier);
+
+  std::string child_seq = sequence_parent_heavy;
+  child_seq[10] = 'A';
+  auto [child, child_wt_modifier] = model.encoder().encode_sequence(child_seq);
+
+  torch::Tensor log_likelihood = netam::poisson_context_log_likelihood(
+      rates, csp_logits, encoded.squeeze(0), child);
 
   fmt::println("Done.");
   return 0;
