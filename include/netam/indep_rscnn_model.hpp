@@ -43,11 +43,14 @@ class IndepRSCNNModel : public torch::nn::Module {
   IndepRSCNNModel(const IndepRSCNNParams& params)
       :
 
-        // Calculate padding for "same" convolution
-        // For same padding: padding = (kernel_size - 1) / 2
-        padding_{(params.kernel_size() - 1) / 2},
+        // Calculate asymmetric padding for "same" convolution (matches PyTorch)
+        // total_padding = kernel_size - 1
+        // pad_left = total_padding // 2
+        // pad_right = total_padding - pad_left
+        pad_left_{(params.kernel_size() - 1) / 2},
+        pad_right_{params.kernel_size() - 1 - pad_left_},
 
-        // R component layers
+        // R component layers (no padding in conv, we pad manually)
         r_kmer_embedding_{register_module(
             "r_kmer_embedding",
             torch::nn::Embedding{params.kmer_count(), params.embedding_dim()})},
@@ -55,14 +58,13 @@ class IndepRSCNNModel : public torch::nn::Module {
                                 torch::nn::Conv1d{torch::nn::Conv1dOptions{
                                     signed_cast(params.embedding_dim()),
                                     signed_cast(params.filter_count()),
-                                    signed_cast(params.kernel_size())}
-                                                      .padding(padding_)})},
+                                    signed_cast(params.kernel_size())}})},
         r_dropout_{register_module("r_dropout",
                                    torch::nn::Dropout{params.dropout_prob()})},
         r_linear_{register_module("r_linear",
                                   torch::nn::Linear{params.filter_count(), 1})},
 
-        // S component layers
+        // S component layers (no padding in conv, we pad manually)
         s_kmer_embedding_{register_module(
             "s_kmer_embedding",
             torch::nn::Embedding{params.kmer_count(), params.embedding_dim()})},
@@ -70,8 +72,7 @@ class IndepRSCNNModel : public torch::nn::Module {
             "s_conv", torch::nn::Conv1d{torch::nn::Conv1dOptions(
                                             signed_cast(params.embedding_dim()),
                                             signed_cast(params.filter_count()),
-                                            signed_cast(params.kernel_size()))
-                                            .padding(padding_)})},
+                                            signed_cast(params.kernel_size()))})},
         s_dropout_{register_module("s_dropout",
                                    torch::nn::Dropout{params.dropout_prob()})},
         s_linear_{register_module(
@@ -83,6 +84,11 @@ class IndepRSCNNModel : public torch::nn::Module {
     // Process R component
     auto r_kmer_embeds = r_kmer_embedding_->forward(encoded_parents);
     r_kmer_embeds = r_kmer_embeds.permute({0, 2, 1});  // [B, E, L]
+    // Apply asymmetric "same" padding before convolution
+    r_kmer_embeds = torch::nn::functional::pad(
+        r_kmer_embeds,
+        torch::nn::functional::PadFuncOptions(
+            {signed_cast(pad_left_), signed_cast(pad_right_)}));
     auto r_conv_out = torch::relu(r_conv_->forward(r_kmer_embeds));
     r_conv_out = r_dropout_->forward(r_conv_out);
     r_conv_out = r_conv_out.permute({0, 2, 1});  // [B, L, F]
@@ -93,6 +99,11 @@ class IndepRSCNNModel : public torch::nn::Module {
     // Process S component
     auto s_kmer_embeds = s_kmer_embedding_->forward(encoded_parents);
     s_kmer_embeds = s_kmer_embeds.permute({0, 2, 1});  // [B, E, L]
+    // Apply asymmetric "same" padding before convolution
+    s_kmer_embeds = torch::nn::functional::pad(
+        s_kmer_embeds,
+        torch::nn::functional::PadFuncOptions(
+            {signed_cast(pad_left_), signed_cast(pad_right_)}));
     auto s_conv_out = torch::relu(s_conv_->forward(s_kmer_embeds));
     s_conv_out = s_dropout_->forward(s_conv_out);
     s_conv_out = s_conv_out.permute({0, 2, 1});  // [B, L, F]
@@ -109,7 +120,9 @@ class IndepRSCNNModel : public torch::nn::Module {
   }
 
  private:
-  const std::size_t padding_;
+  // Asymmetric padding for "same" convolution (matches PyTorch's padding="same")
+  const std::size_t pad_left_;
+  const std::size_t pad_right_;
 
   // R component layers
   torch::nn::Embedding r_kmer_embedding_;

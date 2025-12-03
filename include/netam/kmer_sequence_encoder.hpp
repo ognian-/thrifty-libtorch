@@ -75,7 +75,7 @@ class KmerSequenceEncoder {
   const std::unordered_map<std::string, std::size_t> kmer_to_index_;
 
   static constexpr const char* BASES = "ACGT";
-  static constexpr float BIG = 30.0f;
+  static constexpr float BIG = 1e9f;
 
   static std::vector<std::string> generate_kmers(std::size_t length) {
     std::vector<std::string> kmers;
@@ -103,8 +103,10 @@ class KmerSequenceEncoder {
 
     for (std::size_t i = 0; i < std::min(parent.length(), site_count_); ++i) {
       char base = parent[i];
-      wt_base_modifier[signed_cast(i)][signed_cast(get_base_index(base))] =
-          -BIG;
+      auto idx = get_base_index(base);
+      if (idx < 4) {  // Only set for valid ACGT bases
+        wt_base_modifier[signed_cast(i)][signed_cast(idx)] = -BIG;
+      }
     }
 
     return wt_base_modifier;
@@ -121,7 +123,7 @@ class KmerSequenceEncoder {
       case 'T':
         return 3;
       default:
-        fail("Unknown base");
+        return 4;  // Sentinel for unknown/ambiguous bases (e.g., 'N')
     }
   }
 
