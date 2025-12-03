@@ -67,6 +67,18 @@ class KmerSequenceEncoder {
 
   std::size_t site_count() const noexcept { return site_count_; }
 
+  // Encode a sequence as base indices (A=0, C=1, G=2, T=3, other=4)
+  // This is used for likelihood calculations, not for model input.
+  static torch::Tensor encode_bases(const std::string& sequence) {
+    std::string upper_seq = to_upper(sequence);
+    std::vector<std::int64_t> base_indices;
+    base_indices.reserve(upper_seq.length());
+    for (char base : upper_seq) {
+      base_indices.push_back(signed_cast(get_base_index(base)));
+    }
+    return torch::tensor(base_indices, torch::kInt64);
+  }
+
  private:
   const std::size_t kmer_length_;
   const std::size_t site_count_;

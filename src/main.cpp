@@ -45,10 +45,17 @@ int main() {
 
   std::string child_seq = sequence_parent_heavy;
   child_seq[10] = 'A';
-  auto [child, child_wt_modifier] = model.encoder().encode_sequence(child_seq);
+
+  // Encode sequences as base indices (0-3) for likelihood calculation
+  auto parent_bases =
+      netam::KmerSequenceEncoder::encode_bases(sequence_parent_heavy);
+  auto child_bases = netam::KmerSequenceEncoder::encode_bases(child_seq);
+
+  // Apply softmax to get CSP probabilities from logits
+  auto csp = torch::softmax(csp_logits, /*dim=*/-1);
 
   torch::Tensor log_likelihood = netam::poisson_context_log_likelihood(
-      rates, csp_logits, encoded.squeeze(0), child);
+      rates, csp, parent_bases, child_bases);
 
   fmt::println("Done.");
   return 0;
