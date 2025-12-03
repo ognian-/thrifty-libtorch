@@ -1,3 +1,4 @@
+#include <netam/common.hpp>
 #include <netam/model.hpp>
 #include <netam/pcp_dataframe.hpp>
 #include <netam/likelihood.hpp>
@@ -48,8 +49,8 @@ int main() {
 
   // Encode sequences as base indices (0-3) for likelihood calculation
   auto parent_bases =
-      netam::KmerSequenceEncoder::encode_bases(sequence_parent_heavy);
-  auto child_bases = netam::KmerSequenceEncoder::encode_bases(child_seq);
+      netam::kmer_sequence_encoder::encode_bases(sequence_parent_heavy);
+  auto child_bases = netam::kmer_sequence_encoder::encode_bases(child_seq);
 
   // Apply softmax to get CSP probabilities from logits
   auto csp = torch::softmax(csp_logits, /*dim=*/-1);

@@ -78,12 +78,23 @@ set(NETAM_STRICT_WARNINGS -Wall -Wextra -pedantic -Wconversion -Wold-style-cast
   -Wlogical-op -Wlogical-not-parentheses -Wredundant-decls -Wunreachable-code
 )
 
-add_executable(netam-libtorch)
+add_library(netam-libtorch)
 target_include_directories(netam-libtorch PUBLIC include)
-target_compile_options(netam-libtorch PRIVATE -Wno-unknown-warning-option)
-target_compile_options(netam-libtorch PRIVATE ${NETAM_STRICT_WARNINGS})
-target_link_libraries(netam-libtorch PRIVATE fmt::fmt)
-target_link_libraries(netam-libtorch PRIVATE ${TORCH_LIBRARIES})
-target_link_libraries(netam-libtorch PRIVATE yaml-cpp::yaml-cpp)
-target_link_libraries(netam-libtorch PRIVATE ZLIB::ZLIB)
-target_sources(netam-libtorch PRIVATE src/main.cpp)
+target_compile_options(netam-libtorch PUBLIC -Wno-unknown-warning-option)
+target_compile_options(netam-libtorch PUBLIC ${NETAM_STRICT_WARNINGS})
+target_link_libraries(netam-libtorch PUBLIC fmt::fmt)
+target_link_libraries(netam-libtorch PUBLIC ${TORCH_LIBRARIES})
+target_link_libraries(netam-libtorch PUBLIC yaml-cpp::yaml-cpp)
+target_link_libraries(netam-libtorch PUBLIC ZLIB::ZLIB)
+target_sources(netam-libtorch PRIVATE
+  src/indep_rscnn_model.cpp
+  src/kmer_sequence_encoder.cpp
+  src/pcp_dataframe.cpp
+  src/model.cpp
+  src/likelihood.cpp
+)
+
+
+add_executable(main-example)
+target_link_libraries(main-example PRIVATE netam-libtorch)
+target_sources(main-example PRIVATE examples/main.cpp)
