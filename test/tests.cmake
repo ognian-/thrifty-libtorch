@@ -9,3 +9,4 @@ function(netam_test_executable PRODUCT)
 endfunction()
 
 netam_test_executable(test_basic test/basic.cpp)
+netam_test_executable(test_kmer_sequence_encoder test/kmer_sequence_encoder.cpp)
