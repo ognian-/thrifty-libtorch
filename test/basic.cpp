@@ -1,6 +1,6 @@
 #include <netam-test.hpp>
 
 int main() {
-  netam::Assert(true);
+  TestAssert(true);
   return 0;
 }

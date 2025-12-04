@@ -61,10 +61,9 @@ void test_no_mutations_returns_zero() {
   auto parent = torch::tensor({0, 1, 2, 3, 0}, torch::kInt64);
   auto child = torch::tensor({0, 1, 2, 3, 0}, torch::kInt64);  // Same as parent
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
-  netam::Assert(result.item<double>() == 0.0);
+  TestAssert(result.item<double>() == 0.0);
 }
 
 void test_single_mutation() {
@@ -78,8 +77,7 @@ void test_single_mutation() {
   auto child = torch::tensor({0, 1, 3, 3, 0},
                              torch::kInt64);  // A C T T A (G->T at pos 2)
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
   // Manual calculation:
   // n = 1, sum_rates = 6, t_hat = 1/6
@@ -88,7 +86,7 @@ void test_single_mutation() {
   //                = log(0.5) + log(1/6) - 1
   double expected = std::log(0.5) + std::log(1.0 / 6.0) - 1.0;
 
-  netam::Assert(std::abs(result.item<double>() - expected) < 1e-5);
+  TestAssert(std::abs(result.item<double>() - expected) < 1e-5);
 }
 
 void test_multiple_mutations() {
@@ -115,12 +113,11 @@ void test_multiple_mutations() {
   auto parent = torch::tensor(parent_vec, torch::kInt64);
   auto child = torch::tensor(child_vec, torch::kInt64);
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
   double expected =
       manual_log_likelihood(rates_vec, csp_vec, parent_vec, child_vec);
 
-  netam::Assert(std::abs(result.item<double>() - expected) < 1e-5);
+  TestAssert(std::abs(result.item<double>() - expected) < 1e-5);
 }
 
 void test_all_positions_mutated() {
@@ -144,12 +141,11 @@ void test_all_positions_mutated() {
   auto parent = torch::tensor(parent_vec, torch::kInt64);
   auto child = torch::tensor(child_vec, torch::kInt64);
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
   double expected =
       manual_log_likelihood(rates_vec, csp_vec, parent_vec, child_vec);
 
-  netam::Assert(std::abs(result.item<double>() - expected) < 1e-5);
+  TestAssert(std::abs(result.item<double>() - expected) < 1e-5);
 }
 
 void test_single_position_sequence() {
@@ -160,15 +156,14 @@ void test_single_position_sequence() {
   auto parent = torch::tensor({0}, torch::kInt64);  // A
   auto child = torch::tensor({1}, torch::kInt64);   // C
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
   // n = 1, sum_rates = 2, t_hat = 0.5
   // rate = 2.0, csp = 0.5
   // log_likelihood = log(2.0 * 0.5) + log(0.5) - 1 = log(1) + log(0.5) - 1
   double expected = std::log(1.0) + std::log(0.5) - 1.0;
 
-  netam::Assert(std::abs(result.item<double>() - expected) < 1e-5);
+  TestAssert(std::abs(result.item<double>() - expected) < 1e-5);
 }
 
 void test_output_is_scalar() {
@@ -177,10 +172,9 @@ void test_output_is_scalar() {
   auto parent = torch::zeros({10}, torch::kInt64);
   auto child = torch::ones({10}, torch::kInt64);  // All mutated
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
-  netam::Assert(result.dim() == 0);  // Scalar tensor
+  TestAssert(result.dim() == 0);  // Scalar tensor
 }
 
 void test_high_csp_gives_higher_likelihood() {
@@ -199,12 +193,12 @@ void test_high_csp_gives_higher_likelihood() {
   csp_high[0][0][1] = 0.9f;  // High probability for A->C
 
   auto result_low =
-      netam::poisson_context_log_likelihood(rates, csp_low, parent, child);
+      poisson_context_log_likelihood(rates, csp_low, parent, child);
   auto result_high =
-      netam::poisson_context_log_likelihood(rates, csp_high, parent, child);
+      poisson_context_log_likelihood(rates, csp_high, parent, child);
 
   // Higher CSP should give higher log-likelihood
-  netam::Assert(result_high.item<double>() > result_low.item<double>());
+  TestAssert(result_high.item<double>() > result_low.item<double>());
 }
 
 void test_high_rate_at_mutation_gives_higher_likelihood() {
@@ -222,12 +216,12 @@ void test_high_rate_at_mutation_gives_higher_likelihood() {
   rates_high[0][0] = 10.0f;
 
   auto result_low =
-      netam::poisson_context_log_likelihood(rates_low, csp, parent, child);
+      poisson_context_log_likelihood(rates_low, csp, parent, child);
   auto result_high =
-      netam::poisson_context_log_likelihood(rates_high, csp, parent, child);
+      poisson_context_log_likelihood(rates_high, csp, parent, child);
 
   // Higher rate at mutation should give higher log-likelihood
-  netam::Assert(result_high.item<double>() > result_low.item<double>());
+  TestAssert(result_high.item<double>() > result_low.item<double>());
 }
 
 void test_symmetry_of_mutation_count() {
@@ -243,14 +237,11 @@ void test_symmetry_of_mutation_count() {
   // Same mutation at different position (same rates and CSPs)
   auto child2 = torch::tensor({0, 2, 2, 3}, torch::kInt64);
 
-  auto result1 =
-      netam::poisson_context_log_likelihood(rates, csp, parent1, child1);
-  auto result2 =
-      netam::poisson_context_log_likelihood(rates, csp, parent1, child2);
+  auto result1 = poisson_context_log_likelihood(rates, csp, parent1, child1);
+  auto result2 = poisson_context_log_likelihood(rates, csp, parent1, child2);
 
   // With uniform rates and CSPs, results should be equal
-  netam::Assert(std::abs(result1.item<double>() - result2.item<double>()) <
-                1e-5);
+  TestAssert(std::abs(result1.item<double>() - result2.item<double>()) < 1e-5);
 }
 
 void test_longer_sequence() {
@@ -268,11 +259,10 @@ void test_longer_sequence() {
   child[50] = (parent[50].item<int64_t>() + 2) % 4;
   child[90] = (parent[90].item<int64_t>() + 3) % 4;
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
   // Result should be finite
-  netam::Assert(std::isfinite(result.item<double>()));
+  TestAssert(std::isfinite(result.item<double>()));
 }
 
 void test_formula_components() {
@@ -286,8 +276,7 @@ void test_formula_components() {
   auto child =
       torch::tensor({1, 0, 2, 3}, torch::kInt64);  // 2 mutations at pos 0,1
 
-  auto result =
-      netam::poisson_context_log_likelihood(rates, csp, parent, child);
+  auto result = poisson_context_log_likelihood(rates, csp, parent, child);
 
   // Manual calculation:
   // n = 2, sum_rates = 10, t_hat = 2/10 = 0.2
@@ -296,7 +285,7 @@ void test_formula_components() {
   // log_lik = log(0.25) + log(0.5) + 2*log(0.2) - 2
   double expected = std::log(0.25) + std::log(0.5) + 2.0 * std::log(0.2) - 2.0;
 
-  netam::Assert(std::abs(result.item<double>() - expected) < 1e-5);
+  TestAssert(std::abs(result.item<double>() - expected) < 1e-5);
 }
 
 }  // namespace

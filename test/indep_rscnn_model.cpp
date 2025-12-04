@@ -24,26 +24,26 @@ YAML::Node make_config(std::size_t kmer_length = 3,
 
 void test_params_construction() {
   auto yaml = make_config(3, 7, 16, 9, 0.2);
-  netam::indep_rscnn_params params{65, yaml};
+  indep_rscnn_params params{65, yaml};
 
-  netam::Assert(params.kmer_count() == 65);
-  netam::Assert(params.kmer_length() == 3);
-  netam::Assert(params.embedding_dim() == 7);
-  netam::Assert(params.filter_count() == 16);
-  netam::Assert(params.kernel_size() == 9);
-  netam::Assert(std::abs(params.dropout_prob() - 0.2) < 1e-9);
+  TestAssert(params.kmer_count() == 65);
+  TestAssert(params.kmer_length() == 3);
+  TestAssert(params.embedding_dim() == 7);
+  TestAssert(params.filter_count() == 16);
+  TestAssert(params.kernel_size() == 9);
+  TestAssert(std::abs(params.dropout_prob() - 0.2) < 1e-9);
 }
 
 void test_params_different_values() {
   auto yaml = make_config(5, 32, 64, 15, 0.5);
-  netam::indep_rscnn_params params{1025, yaml};
+  indep_rscnn_params params{1025, yaml};
 
-  netam::Assert(params.kmer_count() == 1025);
-  netam::Assert(params.kmer_length() == 5);
-  netam::Assert(params.embedding_dim() == 32);
-  netam::Assert(params.filter_count() == 64);
-  netam::Assert(params.kernel_size() == 15);
-  netam::Assert(std::abs(params.dropout_prob() - 0.5) < 1e-9);
+  TestAssert(params.kmer_count() == 1025);
+  TestAssert(params.kmer_length() == 5);
+  TestAssert(params.embedding_dim() == 32);
+  TestAssert(params.filter_count() == 64);
+  TestAssert(params.kernel_size() == 15);
+  TestAssert(std::abs(params.dropout_prob() - 0.5) < 1e-9);
 }
 
 // ============================================================================
@@ -52,8 +52,8 @@ void test_params_different_values() {
 
 void test_model_output_shapes() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   const int64_t batch_size = 2;
@@ -66,21 +66,21 @@ void test_model_output_shapes() {
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
   // rates should be [B, L]
-  netam::Assert(rates.dim() == 2);
-  netam::Assert(rates.size(0) == batch_size);
-  netam::Assert(rates.size(1) == seq_length);
+  TestAssert(rates.dim() == 2);
+  TestAssert(rates.size(0) == batch_size);
+  TestAssert(rates.size(1) == seq_length);
 
   // csp_logits should be [B, L, 4]
-  netam::Assert(csp_logits.dim() == 3);
-  netam::Assert(csp_logits.size(0) == batch_size);
-  netam::Assert(csp_logits.size(1) == seq_length);
-  netam::Assert(csp_logits.size(2) == 4);
+  TestAssert(csp_logits.dim() == 3);
+  TestAssert(csp_logits.size(0) == batch_size);
+  TestAssert(csp_logits.size(1) == seq_length);
+  TestAssert(csp_logits.size(2) == 4);
 }
 
 void test_model_batch_size_1() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   const int64_t batch_size = 1;
@@ -92,16 +92,16 @@ void test_model_batch_size_1() {
 
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
-  netam::Assert(rates.size(0) == 1);
-  netam::Assert(rates.size(1) == 50);
-  netam::Assert(csp_logits.size(0) == 1);
-  netam::Assert(csp_logits.size(1) == 50);
+  TestAssert(rates.size(0) == 1);
+  TestAssert(rates.size(1) == 50);
+  TestAssert(csp_logits.size(0) == 1);
+  TestAssert(csp_logits.size(1) == 50);
 }
 
 void test_model_rates_positive() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 100}, torch::kInt32);
@@ -111,13 +111,13 @@ void test_model_rates_positive() {
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
   // Rates are exp(log_rates), so should all be positive
-  netam::Assert(torch::all(rates > 0).item<bool>());
+  TestAssert(torch::all(rates > 0).item<bool>());
 }
 
 void test_model_mask_zeros_output() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 10}, torch::kInt32);
@@ -131,18 +131,18 @@ void test_model_mask_zeros_output() {
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
   // Where mask is false (0), rates should be exp(0) = 1
-  netam::Assert(std::abs(rates[0][5].item<float>() - 1.0f) < 1e-5f);
-  netam::Assert(std::abs(rates[0][6].item<float>() - 1.0f) < 1e-5f);
+  TestAssert(std::abs(rates[0][5].item<float>() - 1.0f) < 1e-5f);
+  TestAssert(std::abs(rates[0][6].item<float>() - 1.0f) < 1e-5f);
 
   // csp_logits should be zero where masked
-  netam::Assert(torch::all(csp_logits[0][5] == 0).item<bool>());
-  netam::Assert(torch::all(csp_logits[0][6] == 0).item<bool>());
+  TestAssert(torch::all(csp_logits[0][5] == 0).item<bool>());
+  TestAssert(torch::all(csp_logits[0][6] == 0).item<bool>());
 }
 
 void test_model_wt_modifier_applied() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 10}, torch::kInt32);
@@ -158,18 +158,18 @@ void test_model_wt_modifier_applied() {
   auto [rates2, csp_logits2] = model.forward(encoded, mask, wt_modifier);
 
   // Rates should be the same (wt_modifier only affects csp_logits)
-  netam::Assert(torch::allclose(rates1, rates2));
+  TestAssert(torch::allclose(rates1, rates2));
 
   // csp_logits at position 0, base 0 should be much lower
-  netam::Assert(csp_logits2[0][0][0].item<float>() <
-                csp_logits1[0][0][0].item<float>());
-  netam::Assert(csp_logits2[0][0][0].item<float>() < -1e8f);
+  TestAssert(csp_logits2[0][0][0].item<float>() <
+             csp_logits1[0][0][0].item<float>());
+  TestAssert(csp_logits2[0][0][0].item<float>() < -1e8f);
 }
 
 void test_model_adjust_rate_bias() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 10}, torch::kInt32);
@@ -187,14 +187,14 @@ void test_model_adjust_rate_bias() {
 
   // rates_after should be approximately 2 * rates_before
   auto ratio = rates_after / rates_before;
-  netam::Assert(torch::allclose(ratio, torch::full_like(ratio, 2.0f),
-                                /*rtol=*/1e-4, /*atol=*/1e-4));
+  TestAssert(torch::allclose(ratio, torch::full_like(ratio, 2.0f),
+                             /*rtol=*/1e-4, /*atol=*/1e-4));
 }
 
 void test_model_deterministic_in_eval_mode() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 50}, torch::kInt32);
@@ -205,16 +205,16 @@ void test_model_deterministic_in_eval_mode() {
   auto [rates1, csp_logits1] = model.forward(encoded, mask, wt_modifier);
   auto [rates2, csp_logits2] = model.forward(encoded, mask, wt_modifier);
 
-  netam::Assert(torch::equal(rates1, rates2));
-  netam::Assert(torch::equal(csp_logits1, csp_logits2));
+  TestAssert(torch::equal(rates1, rates2));
+  TestAssert(torch::equal(csp_logits1, csp_logits2));
 }
 
 void test_model_different_kernel_sizes() {
   // Test with different kernel sizes to ensure padding works correctly
   for (std::size_t kernel_size : {3uz, 5uz, 7uz, 9uz, 11uz}) {
     auto yaml = make_config(3, 7, 16, kernel_size, 0.0);
-    netam::indep_rscnn_params params{65, yaml};
-    netam::indep_rscnn_model model{params};
+    indep_rscnn_params params{65, yaml};
+    indep_rscnn_model model{params};
     model.eval();
 
     auto encoded = torch::randint(0, 65, {1, 100}, torch::kInt32);
@@ -224,15 +224,15 @@ void test_model_different_kernel_sizes() {
     auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
     // Output should maintain sequence length (same padding)
-    netam::Assert(rates.size(1) == 100);
-    netam::Assert(csp_logits.size(1) == 100);
+    TestAssert(rates.size(1) == 100);
+    TestAssert(csp_logits.size(1) == 100);
   }
 }
 
 void test_model_short_sequence() {
   auto yaml = make_config(3, 7, 16, 9, 0.0);
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   // Sequence shorter than kernel size
@@ -243,15 +243,15 @@ void test_model_short_sequence() {
 
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
-  netam::Assert(rates.size(1) == seq_length);
-  netam::Assert(csp_logits.size(1) == seq_length);
+  TestAssert(rates.size(1) == seq_length);
+  TestAssert(csp_logits.size(1) == seq_length);
 }
 
 void test_model_csp_logits_sum_behavior() {
   // After softmax, CSPs should sum to 1 for each position
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   auto encoded = torch::randint(0, 65, {1, 20}, torch::kInt32);
@@ -265,14 +265,14 @@ void test_model_csp_logits_sum_behavior() {
 
   // Each position should sum to 1
   auto sums = csps.sum(/*dim=*/-1);
-  netam::Assert(torch::allclose(sums, torch::ones_like(sums), /*rtol=*/1e-5,
-                                /*atol=*/1e-5));
+  TestAssert(torch::allclose(sums, torch::ones_like(sums), /*rtol=*/1e-5,
+                             /*atol=*/1e-5));
 }
 
 void test_model_larger_batch() {
   auto yaml = make_config();
-  netam::indep_rscnn_params params{65, yaml};
-  netam::indep_rscnn_model model{params};
+  indep_rscnn_params params{65, yaml};
+  indep_rscnn_model model{params};
   model.eval();
 
   const int64_t batch_size = 16;
@@ -284,8 +284,8 @@ void test_model_larger_batch() {
 
   auto [rates, csp_logits] = model.forward(encoded, mask, wt_modifier);
 
-  netam::Assert(rates.size(0) == batch_size);
-  netam::Assert(csp_logits.size(0) == batch_size);
+  TestAssert(rates.size(0) == batch_size);
+  TestAssert(csp_logits.size(0) == batch_size);
 }
 
 }  // namespace
