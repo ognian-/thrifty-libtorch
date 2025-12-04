@@ -3,7 +3,7 @@
 // (CSPs) from the ThriftyHumV0.2-45 model
 
 #include <netam/common.hpp>
-#include <netam/model.hpp>
+#include <netam/crepe.hpp>
 #include <netam/pcp_dataframe.hpp>
 
 #include <netam/include-matplot.hpp>
@@ -12,11 +12,11 @@
 
 int main() {
   // Load the model (equivalent to pretrained.load("ThriftyHumV0.2-45"))
-  netam::model model{"../data/ThriftyHumV0.2-45-libtorch.pth",
+  netam::crepe crepe{"../data/ThriftyHumV0.2-45-libtorch.pth",
                      "../data/ThriftyHumV0.2-45.yml"};
 
   torch::NoGradGuard no_grad;
-  model->eval();
+  crepe->eval();
 
   // Load the PCP dataframe
   netam::pcp_dataframe pcp_df{
@@ -59,18 +59,18 @@ int main() {
   std::vector<torch::Tensor> csp_logits_list;
 
   for (const auto& seq : sequences) {
-    auto [encoded, wt_modifier] = model.encoder().encode_sequence(seq);
+    auto [encoded, wt_modifier] = crepe.encoder().encode_sequence(seq);
 
     // Create mask (all 1s for valid positions)
     torch::Tensor mask = torch::ones(
-        {1, netam::signed_cast(model.encoder().site_count())}, torch::kBool);
+        {1, netam::signed_cast(crepe.encoder().site_count())}, torch::kBool);
 
     // Add batch dimension
     encoded = encoded.unsqueeze(0);
     wt_modifier = wt_modifier.unsqueeze(0);
 
     // Forward pass
-    auto [rates, csp_logits] = model->forward(encoded, mask, wt_modifier);
+    auto [rates, csp_logits] = crepe->forward(encoded, mask, wt_modifier);
 
     // Remove batch dimension for storage
     rates_list.push_back(rates.squeeze(0));

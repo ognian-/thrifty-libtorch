@@ -7,9 +7,9 @@
 
 namespace netam {
 
-class model {
+class crepe {
  public:
-  model(const std::filesystem::path& weights_path,
+  crepe(const std::filesystem::path& weights_path,
         const std::filesystem::path& yaml_path);
 
   kmer_sequence_encoder& encoder() noexcept;

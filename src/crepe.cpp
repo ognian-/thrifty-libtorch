@@ -1,11 +1,11 @@
-#include <netam/model.hpp>
+#include <netam/crepe.hpp>
 #include <netam/common.hpp>
 
 #include <fstream>
 
 namespace netam {
 
-model::model(const std::filesystem::path& weights_path,
+crepe::crepe(const std::filesystem::path& weights_path,
              const std::filesystem::path& yaml_path)
     : yaml_{YAML::LoadFile(yaml_path)},
       encoder_{yaml_["encoder_parameters"]},
@@ -32,8 +32,8 @@ model::model(const std::filesystem::path& weights_path,
   }
 }
 
-kmer_sequence_encoder& model::encoder() noexcept { return encoder_; }
+kmer_sequence_encoder& crepe::encoder() noexcept { return encoder_; }
 
-indep_rscnn_model* model::operator->() noexcept { return &model_; }
+indep_rscnn_model* crepe::operator->() noexcept { return &model_; }
 
 }  // namespace netam

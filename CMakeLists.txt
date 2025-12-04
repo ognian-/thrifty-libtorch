@@ -104,7 +104,7 @@ target_sources(netam-libtorch PRIVATE
   src/indep_rscnn_model.cpp
   src/kmer_sequence_encoder.cpp
   src/pcp_dataframe.cpp
-  src/model.cpp
+  src/crepe.cpp
   src/likelihood.cpp
 )
 
