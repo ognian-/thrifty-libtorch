@@ -10,3 +10,4 @@ endfunction()
 
 netam_test_executable(test_basic test/basic.cpp)
 netam_test_executable(test_kmer_sequence_encoder test/kmer_sequence_encoder.cpp)
+netam_test_executable(test_indep_rscnn_model test/indep_rscnn_model.cpp)
