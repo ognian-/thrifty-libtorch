@@ -1,7 +1,7 @@
 #pragma once
 
 #include <torch/torch.h>
-#include <yaml-cpp/yaml.h>
+#include <netam/include-yaml.hpp>
 
 #include <vector>
 #include <string>

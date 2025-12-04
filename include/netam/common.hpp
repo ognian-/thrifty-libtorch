@@ -1,6 +1,7 @@
 #pragma once
 
-#include <fmt/format.h>
+#include <netam/include-fmt.hpp>
+
 #include <iostream>
 #include <source_location>
 #include <limits>
